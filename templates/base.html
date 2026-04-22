@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeX Toolset</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        const savedTheme = localStorage.getItem('tex-toolset-theme') || 'emerald';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-base-100 text-base-content font-sans">
+
+    <div class="drawer lg:drawer-open">
+        <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
+
+        <div class="drawer-content flex flex-col items-center justify-start p-4 md:p-8 min-h-screen">
+            <div class="w-full lg:hidden flex justify-start mb-4">
+                <label for="my-drawer-2" class="btn btn-square btn-ghost drawer-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </label>
+            </div>
+
+            <div class="w-full max-w-5xl">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+
+        <div class="drawer-side border-r border-base-300">
+            <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
+            <div class="flex flex-col h-full bg-base-200 w-72">
+                <ul class="menu p-4 text-base-content flex-grow gap-2">
+                    <li class="mb-6">
+                        <div class="flex items-center gap-3 px-2">
+                            <div class="bg-primary text-primary-content p-2 rounded-lg shadow-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            </div>
+                            <h2 class="text-2xl font-black tracking-tighter uppercase">TeX Toolset</h2>
+                        </div>
+                    </li>
+
+                    <li class="menu-title opacity-60 uppercase text-[10px] font-bold">Reference Management</li>
+                    <li>
+                        <a href="/" class="{% if active_page == 'bib_cleaner' %}active{% endif %} font-medium">Bibliography Pruner</a>
+                    </li>
+                    <li>
+                        <a href="/unifier" class="flex justify-between items-center {% if active_page == 'bib_unifier' %}active{% endif %} font-medium">
+                            Bibliography Unifier
+                            <span class="badge badge-warning badge-sm font-black text-[9px] border-none">BETA</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="p-4 border-t border-base-300 space-y-4">
+                    <button class="btn btn-ghost btn-block justify-start gap-3 hover:bg-base-300" onclick="settings_modal.showModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><circle cx="12" cy="12" r="3" /></svg>
+                        Settings
+                    </button>
+                    <div class="px-4 opacity-30 font-mono text-[9px] tracking-widest uppercase">v1.0.0-beta</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <dialog id="settings_modal" class="modal">
+        <div class="modal-box max-w-2xl bg-base-100 border border-base-300 p-0 overflow-hidden shadow-2xl">
+            <div class="bg-base-200 p-6 border-b border-base-300 flex justify-between items-center">
+                <h3 class="font-bold text-2xl tracking-tight">System Settings</h3>
+                <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
+            </div>
+
+            <div class="p-6 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <section>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest opacity-50 mb-4">Project Credits</h4>
+                    <div class="flex items-center gap-4 p-4 rounded-2xl bg-base-200/50 border border-base-300">
+                        <div class="avatar placeholder">
+                            <div class="bg-primary text-primary-content rounded-full w-12">
+                                <span class="text-lg font-bold">JZ</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="font-bold text-lg">Jerry Zhang</div>
+                            <div class="text-xs opacity-60"><a href="https://nablafx.github.io/">https://nablafx.github.io/</a></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest opacity-50 mb-4">Interface Theme</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="themeGrid">
+                        </div>
+                </section>
+            </div>
+
+            <div class="modal-action p-4 bg-base-200 m-0 border-t border-base-300">
+                <form method="dialog"><button class="btn btn-primary px-10 font-bold uppercase tracking-widest">Done</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <script>
+        const themes = [
+            "emerald", "light", "dark", "cupcake", "bumblebee", "corporate",
+            "synthwave", "retro", "cyberpunk", "valentine", "halloween",
+            "garden", "forest", "aqua", "lofi", "pastel", "fantasy",
+            "wireframe", "black", "luxury", "dracula", "cmyk", "autumn",
+            "business", "acid", "lemonade", "night", "coffee", "winter"
+        ];
+
+        function renderThemes() {
+            const grid = document.getElementById('themeGrid');
+            const currentTheme = localStorage.getItem('tex-toolset-theme') || 'emerald';
+
+            grid.innerHTML = themes.map(t => `
+                <div data-theme="${t}"
+                     onclick="changeTheme('${t}')"
+                     class="group cursor-pointer rounded-xl border p-3 transition-all hover:bg-base-300/20
+                     ${currentTheme === t ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-base-300 bg-base-100'}"
+                     id="theme-card-${t}">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-base-content">${t}</span>
+                            ${currentTheme === t ? '<div class="badge badge-primary badge-xs scale-75 font-bold">ACTIVE</div>' : ''}
+                        </div>
+                        <div class="flex h-2 w-full gap-0.5 overflow-hidden rounded-full opacity-80">
+                            <div class="bg-primary w-1/4 h-full"></div>
+                            <div class="bg-secondary w-1/4 h-full"></div>
+                            <div class="bg-accent w-1/4 h-full"></div>
+                            <div class="bg-neutral w-1/4 h-full"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('tex-toolset-theme', theme);
+            renderThemes();
+        }
+
+        window.addEventListener('DOMContentLoaded', renderThemes);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

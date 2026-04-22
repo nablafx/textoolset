@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="loadingOverlay" class="hidden fixed inset-0 bg-base-300/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+    <p class="font-bold">Recalibrating Bibliography Standards...</p>
+</div>
+
+<div class="space-y-8">
+    <div>
+        <h1 class="text-4xl font-bold">BibTeX Unifier</h1>
+        <p class="text-base-content/70">Seamlessly switch between legacy BibTeX and modern BibLaTeX formats.</p>
+    </div>
+
+    <div class="card bg-base-200 border border-base-300 shadow-xl">
+        <div class="card-body">
+            <form id="unifyForm" class="space-y-6">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-lg">Target Standard</span></label>
+                    <div class="join w-full">
+                        <input class="join-item btn flex-1" type="radio" name="target" value="bibtex" aria-label="Legacy BibTeX" checked />
+                        <input class="join-item btn flex-1" type="radio" name="target" value="biblatex" aria-label="Modern BibLaTeX" />
+                    </div>
+                    <label class="label">
+                        <span class="label-text-alt opacity-60">BibTeX is better for journals; BibLaTeX is better for Unicode/Theses.</span>
+                    </label>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Input .bib File</span></label>
+                    <input type="file" name="bib_file" accept=".bib" required class="file-input file-input-bordered w-full bg-base-100" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">Apply Transformation</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="resultsUI" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+        <div class="flex flex-col md:flex-row gap-4 items-center">
+            <div class="stat bg-base-200 border border-base-300 rounded-box w-full md:w-64">
+                <div class="stat-title font-bold">Entries Modified</div>
+                <div id="statFixed" class="stat-value text-primary">0</div>
+            </div>
+            <button onclick="downloadFile()" class="btn btn-success flex-1 h-24 text-xl shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Download Unified .bib
+            </button>
+        </div>
+
+        <div>
+            <h3 class="text-2xl font-bold mb-6">Transformation Log</h3>
+            <div id="logContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let globalResult = "";
+
+    document.getElementById('unifyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+
+        const formData = new FormData(e.target);
+        const response = await fetch('/api/unify', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        globalResult = data.result;
+        document.getElementById('statFixed').innerText = data.stats.formatted;
+
+        const logContainer = document.getElementById('logContainer');
+        logContainer.innerHTML = data.log.map(line => `
+            <div class="flex items-center gap-4 p-4 rounded-xl border border-base-300 bg-primary/5 transition-all hover:shadow-md">
+                <div class="badge badge-primary badge-xs shrink-0"></div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] uppercase font-bold opacity-60">Standardization Task</span>
+                    <span class="text-sm font-mono">${line}</span>
+                </div>
+            </div>`).join('') || `<div class="col-span-full alert bg-base-200">No changes needed for this format!</div>`;
+
+        document.getElementById('resultsUI').classList.remove('hidden');
+        document.getElementById('resultsUI').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    });
+
+    function downloadFile() {
+if (!outputContent || outputContent.trim() === "") {
+        alert("Nothing to save!");
+        return;
+    }
+
+    // Check if we are running inside PyWebview
+    if (window.pywebview && window.pywebview.api) {
+        // Call the Python function we exposed
+        window.pywebview.api.save_bib_file(outputContent).then(success => {
+            if (success) {
+                console.log("File saved successfully via Native Dialog");
+            }
+        });
+    } else {
+        // Fallback for standard browser testing
+        const blob = new Blob([outputContent], { type: 'text/x-bibtex' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'references.bib';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+    }
+</script>
+{% endblock %}

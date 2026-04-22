@@ -59,58 +59,75 @@
 
 {% block scripts %}
 <script>
-    let globalResult = "";
+    let globalResult = ""; // This is where your data is stored
 
     document.getElementById('unifyForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         document.getElementById('loadingOverlay').classList.remove('hidden');
 
         const formData = new FormData(e.target);
-        const response = await fetch('/api/unify', { method: 'POST', body: formData });
-        const data = await response.json();
+        try {
+            const response = await fetch('/api/unify', { method: 'POST', body: formData });
+            const data = await response.json();
 
-        globalResult = data.result;
-        document.getElementById('statFixed').innerText = data.stats.formatted;
+            globalResult = data.result; // Data successfully saved to globalResult
+            document.getElementById('statFixed').innerText = data.stats.formatted;
 
-        const logContainer = document.getElementById('logContainer');
-        logContainer.innerHTML = data.log.map(line => `
-            <div class="flex items-center gap-4 p-4 rounded-xl border border-base-300 bg-primary/5 transition-all hover:shadow-md">
-                <div class="badge badge-primary badge-xs shrink-0"></div>
-                <div class="flex flex-col">
-                    <span class="text-[10px] uppercase font-bold opacity-60">Standardization Task</span>
-                    <span class="text-sm font-mono">${line}</span>
-                </div>
-            </div>`).join('') || `<div class="col-span-full alert bg-base-200">No changes needed for this format!</div>`;
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = data.log.map(line => `
+                <div class="flex items-center gap-4 p-4 rounded-xl border border-base-300 bg-primary/5 transition-all hover:shadow-md">
+                    <div class="badge badge-primary badge-xs shrink-0"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase font-bold opacity-60">Standardization Task</span>
+                        <span class="text-sm font-mono">${line}</span>
+                    </div>
+                </div>`).join('') || `<div class="col-span-full alert bg-base-200">No changes needed for this format!</div>`;
 
-        document.getElementById('resultsUI').classList.remove('hidden');
-        document.getElementById('resultsUI').scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('resultsUI').classList.remove('hidden');
+            document.getElementById('resultsUI').scrollIntoView({ behavior: 'smooth' });
+        } catch (err) {
+            alert("Error connecting to engine.");
+        } finally {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
     });
 
-    function downloadFile() {
-if (!outputContent || outputContent.trim() === "") {
-        alert("Nothing to save!");
-        return;
-    }
+    async function downloadFile() {
+        // BUG FIX: Use 'globalResult' instead of 'outputContent'
+        if (!globalResult || globalResult.trim() === "") {
+            alert("Nothing to save! Please run the transformation first.");
+            return;
+        }
 
-    // Check if we are running inside PyWebview
-    if (window.pywebview && window.pywebview.api) {
-        // Call the Python function we exposed
-        window.pywebview.api.save_bib_file(outputContent).then(success => {
-            if (success) {
-                console.log("File saved successfully via Native Dialog");
+        // 1. Check for Desktop (pywebview) Bridge
+        if (window.pywebview && window.pywebview.api) {
+            try {
+                const success = await window.pywebview.api.save_bib_file(globalResult);
+                if (success) {
+                    console.log("File saved via native desktop dialog.");
+                }
+            } catch (err) {
+                console.error("Desktop save error:", err);
+                alert("Desktop save failed.");
             }
-        });
-    } else {
-        // Fallback for standard browser testing
-        const blob = new Blob([outputContent], { type: 'text/x-bibtex' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'references.bib';
-        a.click();
-        window.URL.revokeObjectURL(url);
-    }
+        }
+        // 2. Browser Fallback
+        else {
+            const blob = new Blob([globalResult], { type: 'text/x-bibtex' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'unified_references.bib';
+
+            document.body.appendChild(a);
+            a.click();
+
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+        }
     }
 </script>
 {% endblock %}

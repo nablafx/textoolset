@@ -228,13 +228,37 @@
         modal.showModal();
     }
 
-    function downloadOutput() {
-        if (!outputContent) return;
+async function downloadOutput() {
+    if (!outputContent || outputContent.trim() === "") {
+        alert("No content available to download.");
+        return;
+    }
+
+    // Check if we are running in the pywebview Desktop environment
+    if (window.pywebview && window.pywebview.api) {
+        try {
+            // Call the Python ProApi.save_bib_file method
+            const success = await window.pywebview.api.save_bib_file(outputContent);
+            if (success) {
+                // Optional: Show a toast or notification that it saved
+                console.log("File saved via native dialog.");
+            }
+        } catch (err) {
+            console.error("Native save failed:", err);
+            alert("Desktop save failed. Check console.");
+        }
+    } else {
+        // Fallback for standard browser usage
         const blob = new Blob([outputContent], { type: 'text/x-bibtex' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'cleaned_bibliography.bib';
+        a.href = url;
+        a.download = 'cleaned_bibliography.bib';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     }
+}
 </script>
 {% endblock %}

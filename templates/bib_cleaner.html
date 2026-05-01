@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Loading Overlay -->
 <div id="loadingOverlay" class="hidden fixed inset-0 bg-base-300/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4">
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <p class="font-bold text-lg animate-pulse text-primary">Pruning & Verifying Library...</p>
@@ -12,6 +13,7 @@
             <h1 class="text-4xl font-bold tracking-tight">Bibliography Pruner</h1>
             <p class="text-base-content/70 italic">Clean your citations for BibTeX & bibLaTeX manuscripts.</p>
         </div>
+        <!-- Integrity Badge -->
         <div id="integrityBadge" class="hidden animate-bounce cursor-pointer" onclick="verification_modal.showModal()">
             <div class="badge badge-success gap-2 py-5 px-6 shadow-lg border-none hover:scale-105 transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" /></svg>
@@ -20,17 +22,20 @@
         </div>
     </div>
 
+    <!-- Upload Section -->
     <div class="card bg-base-200 border border-base-300 shadow-xl">
         <div class="card-body">
             <form id="purifyForm" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-bold text-sm uppercase tracking-wide">Source Library (.bib)</span></label>
-                        <input type="file" name="bib_file" accept=".bib" required class="file-input file-input-bordered w-full bg-base-100" />
+                        <!-- Added strict accept and ID for validation -->
+                        <input type="file" id="bibInput" name="bib_file" accept=".bib" required class="file-input file-input-bordered w-full bg-base-100" />
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-bold text-sm uppercase tracking-wide">Manuscript Source (.tex)</span></label>
-                        <input type="file" name="tex_files" accept=".tex" multiple required class="file-input file-input-bordered w-full bg-base-100" />
+                        <!-- Added strict accept and ID for validation -->
+                        <input type="file" id="texInput" name="tex_files" accept=".tex" multiple required class="file-input file-input-bordered w-full bg-base-100" />
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-full mt-4 shadow-md font-bold uppercase tracking-widest">Execute Pruning Engine</button>
@@ -38,6 +43,7 @@
         </div>
     </div>
 
+    <!-- Results Dashboard -->
     <div id="resultsUI" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="stat bg-base-200 border border-base-300 rounded-box shadow-sm">
@@ -67,6 +73,7 @@
     </div>
 </div>
 
+<!-- Diff Inspector Modal -->
 <dialog id="diff_modal" class="modal">
     <div class="modal-box w-11/12 max-w-5xl bg-base-300 p-0 overflow-hidden border border-base-content/10 shadow-2xl">
         <div class="bg-base-200 p-4 border-b border-base-content/10 flex justify-between items-center">
@@ -95,13 +102,13 @@
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
+<!-- Integrity Verification Modal -->
 <dialog id="verification_modal" class="modal">
     <div class="modal-box border-2 border-success/30 shadow-2xl bg-base-100">
         <h3 class="font-bold text-2xl text-success flex items-center gap-3 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
             Integrity Verification
         </h3>
-
         <ul class="space-y-3">
             <li class="flex items-start gap-4 p-3 rounded-lg bg-success/5 border border-success/10">
                 <div class="bg-success text-success-content rounded-full p-1 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
@@ -116,7 +123,6 @@
                 <div><span class="font-bold block text-sm text-base-content">Encoding Guard</span><span class="text-xs opacity-60">UTF-8 stability preserved for special characters and accents.</span></div>
             </li>
         </ul>
-
         <div class="modal-action mt-6"><form method="dialog" class="w-full"><button class="btn btn-success btn-block text-white font-bold">Acknowledge Audit</button></form></div>
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
@@ -134,6 +140,23 @@
     let outputContent = "";
     let entriesMap = {};
 
+    // --- NEW: Strict Extension Enforcement ---
+    const validateFile = (inputElement, extension) => {
+        inputElement.addEventListener('change', function() {
+            const files = Array.from(this.files);
+            const invalidFile = files.find(file => !file.name.toLowerCase().endsWith(extension));
+            if (invalidFile) {
+                alert(`Invalid file type: ${invalidFile.name}. Please upload only ${extension} files.`);
+                this.value = "";
+            }
+        });
+    };
+
+    // Initialize validations
+    validateFile(document.getElementById('bibInput'), '.bib');
+    validateFile(document.getElementById('texInput'), '.tex');
+
+    // --- FORM SUBMISSION ---
     document.getElementById('purifyForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const overlay = document.getElementById('loadingOverlay');
@@ -187,6 +210,7 @@
         finally { overlay.classList.add('hidden'); }
     });
 
+    // --- UI HELPERS ---
     function showDiff(key, type) {
         const originalRaw = entriesMap[key] || "";
         const modal = document.getElementById('diff_modal');
@@ -228,37 +252,31 @@
         modal.showModal();
     }
 
-async function downloadOutput() {
-    if (!outputContent || outputContent.trim() === "") {
-        alert("No content available to download.");
-        return;
-    }
-
-    // Check if we are running in the pywebview Desktop environment
-    if (window.pywebview && window.pywebview.api) {
-        try {
-            // Call the Python ProApi.save_bib_file method
-            const success = await window.pywebview.api.save_bib_file(outputContent);
-            if (success) {
-                // Optional: Show a toast or notification that it saved
-                console.log("File saved via native dialog.");
-            }
-        } catch (err) {
-            console.error("Native save failed:", err);
-            alert("Desktop save failed. Check console.");
+    async function downloadOutput() {
+        if (!outputContent || outputContent.trim() === "") {
+            alert("No content available to download.");
+            return;
         }
-    } else {
-        // Fallback for standard browser usage
-        const blob = new Blob([outputContent], { type: 'text/x-bibtex' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'cleaned_bibliography.bib';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+
+        if (window.pywebview && window.pywebview.api) {
+            try {
+                const success = await window.pywebview.api.save_bib_file(outputContent);
+                if (success) console.log("File saved via native dialog.");
+            } catch (err) {
+                console.error("Native save failed:", err);
+                alert("Desktop save failed. Check console.");
+            }
+        } else {
+            const blob = new Blob([outputContent], { type: 'text/x-bibtex' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cleaned_bibliography.bib';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
     }
-}
 </script>
 {% endblock %}

@@ -1,6 +1,10 @@
 # Tex ToolKit
 Offering handy tools for pre-submission pack up!
 
+<img width="600" height="400" alt="image" src="https://github.com/user-attachments/assets/f2c1678a-ca56-4ece-ba62-2955c668cfe5" />
+
+
+
 ## How to run
 ### OPTION 1
 Using the executables in the release page， where you have

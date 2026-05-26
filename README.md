@@ -1,7 +1,7 @@
 # Tex ToolKit
 Offering handy tools for pre-submission pack up!
 
-# How to run
+## How to run
 ### OPTION 1
 Using the executables in the release page， where you have
 - MacOS version (Apple silicon)
@@ -12,7 +12,7 @@ Using the executables in the release page， where you have
    ```shell
    git clone https://github.com/nablafx/textoolset
    ```
-3. Enter te repo directory and install deps
+2. Enter te repo directory and install deps
    ```shell
    cd textoolset
    ```
@@ -20,5 +20,10 @@ Using the executables in the release page， where you have
    pip install -r requirements.txt
    ```
 
-5. Run the entry file
-   ```shell  python main_desktop.py```
+3. Run the entry file
+   ```shell
+   python main_desktop.py
+   ```
+
+## How to build
+Run the respective MacOs or Windows bash scripts for the target platform

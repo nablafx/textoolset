@@ -2,7 +2,7 @@
 # PyInstaller build command for macOS
 # Note: macOS uses the colon ':' as the path separator for --add-data
 
-pyinstaller --noconsole --clean \
+pyinstaller --windowed --onefile --clean \
   --name "TexToolkit" \
   --distpath "build" \
   --workpath "dist" \

@@ -5,7 +5,7 @@ REM Note: Windows uses the semicolon ';' as the path separator for --add-data
 pyinstaller --noconsole --clean ^
   --name "TexToolkit" ^
   --distpath "build" ^
-  --workpath "build" ^
+  --workpath "dist" ^
   --add-data "templates;templates" ^
   --hidden-import "jinja2.ext" ^
   main_desktop.py

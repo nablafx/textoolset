@@ -5,7 +5,7 @@
 pyinstaller --noconsole --clean \
   --name "TexToolkit" \
   --distpath "build" \
-  --workpath "build" \
+  --workpath "dist" \
   --add-data "templates:templates" \
   --hidden-import "jinja2.ext" \
   main_desktop.py

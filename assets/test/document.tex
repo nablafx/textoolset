@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage{graphicx} % Required for including images
 
 \title{Random Research Document}
 \author{Generated Author}
@@ -11,15 +12,19 @@
 
 \section{Introduction}
 This document serves as a demonstration of a LaTeX file interacting with a BibTeX database. 
-We will cite several sources here to meet the requirement of referring to exactly 26 entries 
-from a 50-entry bibliography (which includes 10 duplicates).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{assets/cat.jpg}
+    \caption{A demonstration of an included image.}
+    \label{fig:cat}
+\end{figure}
 
 \section{Literature Review}
 In the field of quantum studies, several authors have made significant contributions. 
 For instance, the work in \cite{ref1} and \cite{ref2} laid the groundwork. 
 Subsequent studies by \cite{ref3}, \cite{ref4}, and \cite{ref5} expanded on these theories.
 Additional context can be found in the following references: \cite{ref6}, \cite{ref7}, \cite{ref8}, \cite{ref9}, and \cite{ref10}.
-Note that these first ten citations actually cover 20 entries in the .bib file because those entries are repeated.
 
 To reach our target of 26 referred entries, we cite six more unique entries:
 The methodologies described in \cite{ref11} and \cite{ref12} are particularly relevant. 

@@ -59,6 +59,10 @@
                             <span class="badge badge-warning badge-sm font-black text-[9px] border-none">BETA</span>
                         </a>
                     </li>
+                    <li class="menu-title opacity-60 uppercase text-[10px] font-bold mt-4">Asset Management</li>
+                    <li>
+                        <a href="/images" class="{% if active_page == 'image_cleaner' %}active{% endif %} font-medium">Image Cleaner</a>
+                    </li>
                 </ul>
 
                 <div class="p-4 border-t border-base-300 space-y-4">
@@ -156,3 +160,4 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
+

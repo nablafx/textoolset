@@ -1,4 +1,6 @@
 import re
+import os
+from pathlib import Path
 
 
 def parse_bib(bib_text):
@@ -224,3 +226,53 @@ def parse_tex(tex_text):
             for key in match.group(1).split(','):
                 keys.add(key.strip())
     return keys
+
+
+def parse_tex_images(tex_text):
+    """
+    Parses a TeX string to extract all referenced image filenames.
+    """
+    pattern = re.compile(r'\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}')
+    images = set()
+    for match in pattern.finditer(tex_text):
+        images.add(match.group(1).strip())
+    return images
+
+
+def clean_project_images(project_path, tex_files_text):
+    """
+    Finds unreferenced images in the project path and deletes them.
+    tex_files_text is an iterable of strings containing contents of all .tex files.
+    """
+    used_images = set()
+    for text in tex_files_text:
+        used_images.update(parse_tex_images(text))
+
+    used_bases = set()
+    for img in used_images:
+        base = os.path.splitext(img)[0]
+        used_bases.add(os.path.basename(base))
+
+    image_extensions = {'.png', '.jpg', '.jpeg', '.pdf', '.eps', '.svg'}
+
+    deleted_files = []
+    kept_files = []
+
+    project_dir = Path(project_path)
+    if not project_dir.exists() or not project_dir.is_dir():
+        return deleted_files, kept_files
+
+    for p in project_dir.rglob('*'):
+        if p.is_file() and p.suffix.lower() in image_extensions:
+            base = p.stem
+            if base in used_bases:
+                kept_files.append(str(p.relative_to(project_dir)))
+            else:
+                try:
+                    p.unlink()
+                    deleted_files.append(str(p.relative_to(project_dir)))
+                except Exception as e:
+                    pass
+
+    return deleted_files, kept_files
+

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="hidden fixed inset-0 bg-base-300/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+    <p class="font-bold text-lg animate-pulse text-primary">Cleaning Images...</p>
+</div>
+
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight">Image Cleaner</h1>
+            <p class="text-base-content/70 italic">Delete unreferenced images in your LaTeX project.</p>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="card bg-base-200 border border-base-300 shadow-xl">
+        <div class="card-body">
+            <form id="cleanForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-sm uppercase tracking-wide">LaTeX Project Path</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="projectPath" name="project_path" placeholder="/path/to/your/latex/project" required class="input input-bordered w-full bg-base-100" />
+                            <button type="button" id="browsePathBtn" class="btn btn-secondary hidden font-bold">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-sm uppercase tracking-wide">Manuscript Source (.tex)</span></label>
+                        <input type="file" id="texInput" name="tex_files" accept=".tex" multiple required class="file-input file-input-bordered w-full bg-base-100" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-error w-full mt-4 shadow-md font-bold uppercase tracking-widest text-white">Execute Image Cleanup</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Dashboard -->
+    <div id="resultsUI" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="stat bg-base-200 border border-base-300 rounded-box shadow-sm">
+                <div class="stat-title text-success font-bold uppercase text-[10px]">Images Kept</div>
+                <div id="statKept" class="stat-value text-success text-2xl">0</div>
+            </div>
+            <div class="stat bg-base-200 border border-base-300 rounded-box shadow-sm">
+                <div class="stat-title text-error font-bold uppercase text-[10px]">Images Deleted</div>
+                <div id="statDeleted" class="stat-value text-error text-2xl">0</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Deleted Files List -->
+            <div class="card bg-base-200 border border-error/30 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="text-error font-bold mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Deleted Files
+                    </h3>
+                    <div class="overflow-y-auto max-h-96 custom-scrollbar pr-2">
+                        <ul id="deletedList" class="space-y-2 font-mono text-xs">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kept Files List -->
+            <div class="card bg-base-200 border border-success/30 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="text-success font-bold mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        Kept Files
+                    </h3>
+                    <div class="overflow-y-auto max-h-96 custom-scrollbar pr-2">
+                        <ul id="keptList" class="space-y-2 font-mono text-xs">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1e1e1e; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Show browse button if running in pywebview
+    window.addEventListener('pywebviewready', function() {
+        const browseBtn = document.getElementById('browsePathBtn');
+        browseBtn.classList.remove('hidden');
+        browseBtn.addEventListener('click', async () => {
+            if (window.pywebview && window.pywebview.api) {
+                const folderPath = await window.pywebview.api.pick_folder();
+                if (folderPath) {
+                    document.getElementById('projectPath').value = folderPath;
+                }
+            }
+        });
+    });
+
+    // Strict Extension Enforcement
+    const validateFile = (inputElement, extension) => {
+        inputElement.addEventListener('change', function() {
+            const files = Array.from(this.files);
+            const invalidFile = files.find(file => !file.name.toLowerCase().endsWith(extension));
+            if (invalidFile) {
+                alert(`Invalid file type: ${invalidFile.name}. Please upload only ${extension} files.`);
+                this.value = "";
+            }
+        });
+    };
+
+    validateFile(document.getElementById('texInput'), '.tex');
+
+    // FORM SUBMISSION
+    document.getElementById('cleanForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Confirmation dialog since this deletes files
+        if (!confirm("Warning: This operation will permanently delete unreferenced image files from the specified project path. Proceed?")) {
+            return;
+        }
+
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.remove('hidden');
+
+        const formData = new FormData(e.target);
+        try {
+            const response = await fetch('/api/clean_images', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            // Update stats
+            document.getElementById('statKept').innerText = data.stats.kept_count;
+            document.getElementById('statDeleted').innerText = data.stats.deleted_count;
+
+            // Render Deleted List
+            const deletedList = document.getElementById('deletedList');
+            if (data.deleted.length > 0) {
+                deletedList.innerHTML = data.deleted.map(item => `
+                    <li class="p-2 bg-error/10 border border-error/20 rounded break-all text-error-content">
+                        ${item}
+                    </li>
+                `).join('');
+            } else {
+                deletedList.innerHTML = '<li class="p-2 opacity-50 italic">No files deleted.</li>';
+            }
+
+            // Render Kept List
+            const keptList = document.getElementById('keptList');
+            if (data.kept.length > 0) {
+                keptList.innerHTML = data.kept.map(item => `
+                    <li class="p-2 bg-success/10 border border-success/20 rounded break-all text-success-content">
+                        ${item}
+                    </li>
+                `).join('');
+            } else {
+                keptList.innerHTML = '<li class="p-2 opacity-50 italic">No files kept.</li>';
+            }
+
+            // Show results
+            document.getElementById('resultsUI').classList.remove('hidden');
+        } catch (error) {
+            console.error("Error during image cleanup:", error);
+            alert("An error occurred. Check console for details.");
+        } finally {
+            overlay.classList.add('hidden');
+        }
+    });
+
+</script>
+{% endblock %}

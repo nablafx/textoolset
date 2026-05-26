@@ -36,6 +36,20 @@ class ProApi:
                 return False
         return False
 
+    def pick_folder(self):
+        """Uses pywebview's native thread-safe dialog to pick a folder."""
+        if not self._window:
+            return None
+
+        result = self._window.create_file_dialog(
+            webview.FOLDER_DIALOG,
+            directory=''
+        )
+
+        if result:
+            return result[0] if isinstance(result, tuple) else result
+        return None
+
 
 def run_flask():
     # Running flask with debug=False for desktop stability

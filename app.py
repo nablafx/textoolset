@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from core.parsers import parse_tex, prune_bib, unify_bib
+from core.parsers import parse_tex, prune_bib, unify_bib, clean_project_images
 
 app = Flask(__name__)
 
@@ -12,6 +12,11 @@ def pruner_page():
 @app.route('/unifier')
 def unifier_page():
     return render_template('bib_unifier.html', active_page='bib_unifier')
+
+
+@app.route('/images')
+def image_cleaner_page():
+    return render_template('image_cleaner.html', active_page='image_cleaner')
 
 
 @app.route('/api/prune', methods=['POST'])
@@ -44,6 +49,27 @@ def api_unify():
 
     unified, log, stats = unify_bib(bib_content, target)
     return jsonify({"result": unified, "log": log, "stats": stats, "target": target})
+
+
+@app.route('/api/clean_images', methods=['POST'])
+def api_clean_images():
+    project_path = request.form.get('project_path', '').strip()
+    tex_files = request.files.getlist('tex_files')
+    
+    tex_texts = []
+    for tf in tex_files:
+        tex_texts.append(tf.read().decode('utf-8', errors='ignore'))
+        
+    deleted, kept = clean_project_images(project_path, tex_texts)
+    
+    return jsonify({
+        "deleted": deleted,
+        "kept": kept,
+        "stats": {
+            "deleted_count": len(deleted),
+            "kept_count": len(kept)
+        }
+    })
 
 
 if __name__ == '__main__':

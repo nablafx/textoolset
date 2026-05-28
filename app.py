@@ -1,7 +1,21 @@
 from flask import Flask, request, jsonify, render_template
 from core.parsers import parse_tex, prune_bib, unify_bib, clean_project_images
+import os
+import sys
 
-app = Flask(__name__)
+# Determine where static files live. When running from source we use the
+# repo's `assets/` directory; when running from a PyInstaller onefile bundle
+# the files are extracted to sys._MEIPASS and the assets will be located
+# at <_MEIPASS>/assets (PyInstaller command used: --add-data "assets;assets").
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    # Running in PyInstaller bundle
+    static_folder_path = os.path.join(sys._MEIPASS, 'assets')
+else:
+    # Running from source
+    static_folder_path = os.path.join(os.path.dirname(__file__), 'assets')
+
+# Serve at URL path '/assets' so templates can use url_for('static', ...)
+app = Flask(__name__, static_folder=static_folder_path, static_url_path='/assets')
 
 
 @app.route('/')
